@@ -31,9 +31,9 @@ usage() {
     echo "                        (default: mlx-community/Qwen3.8-27B-MTP-4bit)" >&2
     echo "  -host <address>       Address to listen on (default: 127.0.0.1)" >&2
     echo "  -port <number>        Port (default: 8080)" >&2
-    echo "  -max-tokens <n>       Default max tokens per answer (default: 65536)" >&2
+    echo "  -max-tokens <n>       Default max tokens per answer, thinking included (default: 32768)" >&2
     echo "  -kv-bits <n>          KV cache quantization bits, or none (default: 8)" >&2
-    echo "  -thinking-budget <n>  Default max tokens of a thinking block (default: 8192)" >&2
+    echo "  -thinking-budget <n>  Default max tokens of a thinking block (default: 4096)" >&2
     echo "  -no-thinking          Thinking off unless the request turns it on" >&2
     echo "  -no-apc               No prefix caching between requests" >&2
     echo "  -apc-blocks <n>       Prefix cache size in blocks of 16 tokens (default: 2048)" >&2
@@ -46,9 +46,9 @@ model=mlx-community/Qwen3.8-27B-4bit
 draft_model=mlx-community/Qwen3.8-27B-MTP-4bit
 host=127.0.0.1
 port=8080
-max_tokens=65536
+max_tokens=32768
 kv_bits=8
-thinking_budget=8192
+thinking_budget=4096
 thinking=1
 apc=1
 apc_blocks=

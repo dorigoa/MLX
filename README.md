@@ -95,9 +95,9 @@ version.
 - `-model`: a model in the Hugging Face cache, `mlx-community/Qwen3.8-27B-4bit` by default;
 - `-draft-model`: its drafter in the cache, `mlx-community/Qwen3.8-27B-MTP-4bit` by default, or `none`;
 - `-host`, `-port`: default `127.0.0.1:8080`;
-- `-max-tokens`: the default answer length, 65536;
+- `-max-tokens`: the default answer length, thinking included, 32768 (a request can send its own);
 - `-kv-bits`: KV cache quantization, 8 bits by default, or `none`;
-- `-thinking-budget`: the default maximum length of a thinking block, 8192 tokens;
+- `-thinking-budget`: the default maximum length of a thinking block, 4096 tokens (a request can send its own `thinking_budget`). Past it, mlx_vlm closes the block and the model answers;
 - `-no-thinking`: thinking is on by default (`--enable-thinking`); with this flag it is off unless the
   request turns it on;
 - `-no-apc`: no prefix caching between requests;
@@ -107,7 +107,7 @@ version.
 With no options it runs the same server as:
 
 ```bash
-APC_ENABLED=1 APC_DISK_ENABLED=0 uvx --from mlx-vlm mlx_vlm.server --model mlx-community/Qwen3.8-27B-4bit --draft-model mlx-community/Qwen3.8-27B-MTP-4bit --host 127.0.0.1 --port 8080 --max-tokens 65536 --kv-bits 8 --enable-thinking --thinking-budget 8192
+APC_ENABLED=1 APC_DISK_ENABLED=0 uvx --from mlx-vlm mlx_vlm.server --model mlx-community/Qwen3.8-27B-4bit --draft-model mlx-community/Qwen3.8-27B-MTP-4bit --host 127.0.0.1 --port 8080 --max-tokens 32768 --kv-bits 8 --enable-thinking --thinking-budget 4096
 ```
 
 How it runs:
