@@ -59,6 +59,17 @@ version.
    the test request fails with `[METAL] … Insufficient Memory`. Qwen3.8-27B 4 bit (15,310 MiB of
    weights) fits at 20000; `mlx-community/gemma-4-31B-it-qat-4bit` (27,481 MiB) does not at 26000.
 
+   Gemma-4-31B-it 4 bit (`mlx-community/gemma-4-31B-it-4bit`, 17,559 MiB) has a drafter too, Google's
+   "assistant" (`gemma4_assistant`, which mlx_vlm runs as MTP):
+
+   ```bash
+   HF_HUB_CACHE=/Volumes/Home/hf_models uvx --from huggingface_hub hf download mlx-community/gemma-4-31B-it-assistant-bf16
+   ```
+
+   With `-draft-model mlx-community/gemma-4-31B-it-assistant-bf16` it went from 18.7-19.0 tok/s to
+   24.1 (prose), 35.7 (code) and 42.2 tok/s (thinking), with 42%, 78% and 98% of the drafts
+   accepted; peak memory 20.4 GB.
+
 4. Try it by hand. `run-mlx.sh` returns once the model has answered a 1-token request.
 
    ```bash
