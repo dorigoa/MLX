@@ -2,7 +2,7 @@
 
 Scripts that start and stop `mlx_vlm.server` on MacStudio1 (`192.168.1.101`), with an MTP drafter for
 speculative decoding. They are made for [llm-console](https://github.com/dorigoa/llm-console) (Mac tab,
-mlx_vlm.server card), which runs them over ssh, and work by hand too.
+MLX card), which runs them over ssh, and work by hand too.
 
 Until 23/11/2026 they started `mlx_lm.server`. `mlx_vlm.server` replaced it because it has `/metrics`
 (the speeds and tokens of each request, for llm-console's live line) and MTP speculative decoding for
@@ -54,7 +54,10 @@ version.
 
    Another MLX model (e.g. from [mlx-community](https://huggingface.co/mlx-community)) goes into the
    cache the same way, and `-model <repo>` starts it. A drafter works only with its own model: give
-   `-draft-model none` for a model without one.
+   `-draft-model none` for a model without one. The weights must fit under the GPU's wired memory
+   limit (`sysctl iogpu.wired_limit_mb`), with room for the KV cache: otherwise the model loads, but
+   the test request fails with `[METAL] … Insufficient Memory`. Qwen3.8-27B 4 bit (15 GB) fits at
+   20000; `mlx-community/gemma-4-31B-it-qat-4bit` (27 GB) does not at 24000.
 
 4. Try it by hand. `run-mlx.sh` returns once the model has answered a 1-token request.
 
