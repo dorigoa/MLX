@@ -56,8 +56,8 @@ version.
    cache the same way, and `-model <repo>` starts it. A drafter works only with its own model: give
    `-draft-model none` for a model without one. The weights must fit under the GPU's wired memory
    limit (`sysctl iogpu.wired_limit_mb`), with room for the KV cache: otherwise the model loads, but
-   the test request fails with `[METAL] … Insufficient Memory`. Qwen3.8-27B 4 bit (15 GB) fits at
-   20000; `mlx-community/gemma-4-31B-it-qat-4bit` (27 GB) does not at 24000.
+   the test request fails with `[METAL] … Insufficient Memory`. Qwen3.8-27B 4 bit (15,310 MiB of
+   weights) fits at 20000; `mlx-community/gemma-4-31B-it-qat-4bit` (27,481 MiB) does not at 26000.
 
 4. Try it by hand. `run-mlx.sh` returns once the model has answered a 1-token request.
 
