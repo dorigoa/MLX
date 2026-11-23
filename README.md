@@ -89,12 +89,14 @@ version.
 - `-thinking-budget`: the default maximum length of a thinking block, 8192 tokens;
 - `-no-thinking`: thinking is on by default (`--enable-thinking`); with this flag it is off unless the
   request turns it on;
+- `-no-apc`: no prefix caching between requests;
+- `-apc-blocks`: the prefix cache's size, in blocks of 16 tokens (mlx_vlm's default: 2048);
 - `-wait`: seconds to wait for the model, 300 by default.
 
 With no options it runs the same server as:
 
 ```bash
-uvx --from mlx-vlm mlx_vlm.server --model mlx-community/Qwen3.8-27B-4bit --draft-model mlx-community/Qwen3.8-27B-MTP-4bit --host 127.0.0.1 --port 8080 --max-tokens 65536 --kv-bits 8 --enable-thinking --thinking-budget 8192
+APC_ENABLED=1 APC_DISK_ENABLED=0 uvx --from mlx-vlm mlx_vlm.server --model mlx-community/Qwen3.8-27B-4bit --draft-model mlx-community/Qwen3.8-27B-MTP-4bit --host 127.0.0.1 --port 8080 --max-tokens 65536 --kv-bits 8 --enable-thinking --thinking-budget 8192
 ```
 
 How it runs:
@@ -105,6 +107,13 @@ How it runs:
 - the model and the drafter load in the background: `/health` answers at once, with `model_ready` false
   until they are in, and requests get 503 meanwhile. Loading Qwen3.8-27B 4 bit with its drafter takes
   about 15 s, test request included;
+- prefix caching (APC) is on, in memory only (`APC_ENABLED=1 APC_DISK_ENABLED=0`): a request that
+  starts like the one before, as the next turn of a conversation does, reuses its KV instead of
+  computing the whole prompt again. With Qwen3.8-27B 4 bit, a 22.5k-token conversation takes 117 s of
+  prefill on its first turn and 0.3-0.6 s on the next ones (37k tokens: 206 s, then 0.4 s). One
+  conversation at a time; mlx_vlm's pool of 2048 blocks of 16 tokens is about 2.6 GiB, roughly 65k
+  tokens of context at 8-bit KV. `-apc-blocks <n>` changes it, `-no-apc` turns it off. On disk it
+  would write about 1.5 GB per request at 37k tokens, so that stays off;
 - each start writes its log to `./mlx-<timestamp>.log`, next to the scripts (git ignores the logs).
   When the run fails, the server may still be running: `stop.sh` stops it.
 

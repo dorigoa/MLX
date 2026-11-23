@@ -10,6 +10,12 @@
 # the version stays the one installed. Unlike mlx_lm.server it has /metrics (JSON)
 # and MTP speculative decoding for Qwen3.8.
 #
+# Prefix caching (APC) is on, in memory only: a request that starts like the one
+# before (the next turn of a conversation, as an agent sends it) reuses its KV
+# instead of computing the whole prompt again (0.5 s instead of ~2 min at 22k
+# tokens). It keeps one conversation; mlx_vlm's pool of 2048 blocks of 16 tokens
+# is about 2.6 GiB (-apc-blocks changes it).
+#
 # Used by llm-console (Mac tab), e.g.:
 #   ~/MLX/run-mlx.sh -model mlx-community/Qwen3.8-27B-4bit \
 #       -draft-model mlx-community/Qwen3.8-27B-MTP-4bit -host 192.168.1.101 -port 8080
@@ -29,6 +35,8 @@ usage() {
     echo "  -kv-bits <n>          KV cache quantization bits, or none (default: 8)" >&2
     echo "  -thinking-budget <n>  Default max tokens of a thinking block (default: 8192)" >&2
     echo "  -no-thinking          Thinking off unless the request turns it on" >&2
+    echo "  -no-apc               No prefix caching between requests" >&2
+    echo "  -apc-blocks <n>       Prefix cache size in blocks of 16 tokens (default: 2048)" >&2
     echo "  -wait <seconds>       How long to wait for the model (default: 300)" >&2
     exit 2
 }
@@ -42,6 +50,8 @@ max_tokens=65536
 kv_bits=8
 thinking_budget=8192
 thinking=1
+apc=1
+apc_blocks=
 wait_s=300
 
 while [[ $# -gt 0 ]]; do
@@ -54,6 +64,8 @@ while [[ $# -gt 0 ]]; do
         -kv-bits)         kv_bits="${2:-}"; shift 2 ;;
         -thinking-budget) thinking_budget="${2:-}"; shift 2 ;;
         -no-thinking)     thinking=0; shift ;;
+        -no-apc)          apc=0; shift ;;
+        -apc-blocks)      apc_blocks="${2:-}"; shift 2 ;;
         -wait)            wait_s="${2:-}"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; usage ;;
     esac
@@ -62,6 +74,10 @@ done
 # The models are in /Volumes/Home/hf_models; never download at start.
 export HF_HUB_CACHE=/Volumes/Home/hf_models
 export HF_HUB_OFFLINE=1
+# mlx_vlm reads the prefix cache settings from the environment. Not on disk: it
+# would write about 1.5 GB per request at 37k tokens.
+export APC_ENABLED=$apc APC_DISK_ENABLED=0
+if [[ -n $apc_blocks ]]; then export APC_NUM_BLOCKS=$apc_blocks; else unset APC_NUM_BLOCKS; fi
 
 in_cache() {
     [[ -d "$HF_HUB_CACHE/models--${1//\//--}/snapshots" ]] || { echo "No model $1 in $HF_HUB_CACHE" >&2; exit 2; }
@@ -87,7 +103,7 @@ fi
 
 cd "$(dirname "$0")" || exit 2
 log="$PWD/mlx-$(date +%Y%m%d-%H%M%S).log"
-echo "Starting mlx_vlm.server: $model, drafter $draft_model, $host:$port"
+echo "Starting mlx_vlm.server: $model, drafter $draft_model, $host:$port, prefix cache $( ((apc)) && echo on || echo off)"
 nohup "$server" "${args[@]}" </dev/null >"$log" 2>&1 &
 pid=$!
 echo "pid $pid, log $log"
